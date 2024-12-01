@@ -1,0 +1,29 @@
+---
+
+name: Minikube devops project pipeline
+
+on:
+  push:
+    branches:
+    - main
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+    - name: Set Short SHA
+      # Present GITHUB SHA
+      run: |
+        echo "SHORT_SHA=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_ENV
+    - name: Build Docker Image
+      run: |
+        docker build -t asaf94/terraform-k8s-project:${{ env.SHORT_SHA }} .
+
+    - name: Login to Dockerhub
+      run: |
+        echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+    - name: Push to Dockerhub
+      run: |
+        docker push asaf94/terraform-k8s-project:${{ env.SHORT_SHA }}
